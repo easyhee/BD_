@@ -66,10 +66,42 @@ ui <- dashboardPage(
         )
       ),
      tabItem(tabName = 'female',
-             
+             fluidPage(
+               titlePanel("서울시 1인 여성 가구 수 현황"),
+               mainPanel(
+                 plotOutput("femalePlot"),
+                 dataTableOutput("femaleTable")
+               )
+             )
      ),
      tabItem(tabName = 'gu',
-             
+             fluidPage(
+               titlePanel("자치구별 통계"),
+               tabsetPanel(
+                 type = "tabs",
+                 id = "guTabs",
+                 tabPanel(
+                   "자치구별 범죄율",
+                   box(
+                     title = "자치구별에 따른 범죄건수",
+                     solidHeader = TRUE,
+                     width = 200,
+                     selectInput("select_gu","자치구를 선택해주세요", choices = unique(your_data$자치구명)),
+                     plotOutput("guPlot")
+                   )
+                 ),
+               tabPanel(
+                 "자치구별 1인 여성 가구수",
+                 box(
+                   title = "자치구에 따른 1인 여성 가구수",
+                   solidHeader = TRUE,
+                   width = 300,
+                   selectInput("selected_gu", "자치구를 선택해주세요", choices = unique(your_data$자치구명)),
+                   plotOutput("gufePlot")
+                 )
+               )
+             )
+             )
      ),
      tabItem(
        tabName = 'time',
@@ -84,7 +116,7 @@ ui <- dashboardPage(
                title = "1인 여성 가구수 통계",
                status = "info",
                solidHeader = TRUE,
-               width = 1000,
+               width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("femaleYearPlot")
              )
@@ -95,7 +127,7 @@ ui <- dashboardPage(
                title = "범죄 건수",
                status = "info",
                solidHeader = TRUE,
-               width = 500,
+               width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("crimeCountByYearPlot")
              )
@@ -106,10 +138,17 @@ ui <- dashboardPage(
                title = "연도별 5대 범죄율",
                status = "info",
                solidHeader = TRUE,
-               width = 500,
+               width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("crimeRateByYearPlot")
              )
+           ),
+           box(
+             title = "Table",
+             status = "info",
+             solidHeader = TRUE,
+             width = 500,
+             dataTableOutput("crimeCountTableByYear")
            )
          )
        )
@@ -119,7 +158,48 @@ ui <- dashboardPage(
   )
 
 server <- function(input, output){
- #'time'탭--------------------------------------------
+ #'female'탭--------------------------------------------------------------------------------
+  output$femalePlot <- renderPlot({
+    your_data$여자[is.na(your_data$여자)] <- 0
+    ggplot(data = your_data, aes(x = 연도, y = 여자)) +
+      geom_bar(stat = "identity", fill = "pink", alpha = 1.0, width = 0.5) +
+      labs(title = "서울시 1인 여성 가구수 파악", x = "연도", y = "1인 여성 가구수", fill = "1인 여성 가구수") +
+      theme_minimal() +
+      theme(legend.position = "none")
+  })
+
+  output$femaleTable <- renderDataTable({
+    datatable(your_data[, c("연도", "여자")], options = list(dom = 't', pageLength = 10))
+  })
+  
+  
+#'gu'탭------------------------------------------------------------------------------------------------
+  # 자치구별에 따른 범죄건수 그래프
+  output$guPlot <- renderPlot({
+    selected_gu_data <- subset(your_data, 자치구명 == input$select_gu)
+    ggplot(data = selected_gu_data, aes(x = 연도, y = 폭력, fill = 폭력)) +
+      geom_bar(stat = "identity") +
+      labs(title = paste(input$select_gu, "자치구의 범죄건수"),
+           x = "연도",
+           y = "범죄건수",
+           fill = "범죄건수") +
+      theme_minimal() +
+      theme(legend.position = "none")
+  })
+  
+  # 자치구에 따른 1인 여성 가구수 그래프
+  output$gufePlot <- renderPlot({
+    selected_gu_data <- subset(your_data, 자치구명 == input$selected_gu)
+    ggplot(data = selected_gu_data, aes(x = 연도, y = 여자, fill = 여자)) +
+      geom_bar(stat = "identity") +
+      labs(title = paste(input$selected_gu, "자치구의 1인 여성 가구수"),
+           x = "연도",
+           y = "1인 여성 가구수",
+           fill = "1인 여성 가구수") +
+      theme_minimal() +
+      theme(legend.position = "none")
+  })
+ #'time'탭---------------------------------------------------------------------------------------------
     #1인여성가구수 그래프
     output$femaleYearPlot <- renderPlot({
     # 선택한 연도에 해당하는 데이터 필터링
@@ -138,11 +218,11 @@ server <- function(input, output){
            fill = "자치구") +
       theme(legend.position = "none")
   })
+    
     # 연도별 범죄 건수 그래프
     output$crimeCountByYearPlot <- renderPlot({
       # 선택한 연도에 해당하는 데이터 필터링
       selected_year_data <- subset(your_data, 연도 == input$selected_year)
-      
       # 연도별 5대 범죄 건수 계산
       crime_counts <- selected_year_data %>%
         summarise(
@@ -152,7 +232,6 @@ server <- function(input, output){
           theft_count = sum(절도),
           violence_count = sum(폭력)
         )
-      
       # 연도별 범죄 건수를 데이터프레임으로 변환
       crime_counts_df <- data.frame(
         범죄유형 = c("살인", "강도", "강간", "절도", "폭력"),
@@ -164,10 +243,9 @@ server <- function(input, output){
           crime_counts$violence_count
         )
       )
-      
       # 막대 그래프 생성
       ggplot(crime_counts_df, aes(x = 범죄유형, y = 건수, fill = 범죄유형)) +
-        geom_bar(stat = "identity") +
+        geom_bar(stat = "identity", width = 0.5) +
         theme_minimal() +
         labs(title = paste(input$selected_year, "년도 5대 범죄 발생 건수"),
              x = "범죄 유형",
@@ -175,6 +253,7 @@ server <- function(input, output){
              fill = "범죄 유형") +
         theme(legend.position = "none")
     })
+    
     #범죄율 선 그래프
     output$crimeRateByYearPlot <- renderPlot({
       # 선택한 연도에 해당하는 데이터 필터링
@@ -194,7 +273,6 @@ server <- function(input, output){
           theft_rate = sum(절도) / sum(여자) * 1000,  # 절도율
           violence_rate = sum(폭력) / sum(여자) * 1000  # 폭력율
         )
-      
       # 연도별 범죄율을 데이터프레임으로 변환
       crime_rates_df <- data.frame(
         범죄율 = c("살인율", "강도율", "강간율", "절도율", "폭력율"),
@@ -206,7 +284,6 @@ server <- function(input, output){
           crime_rates$violence_rate
         )
       )
-      
       # 선 그래프 생성
       ggplot(crime_rates_df, aes(x = 범죄율, y = 비율, group = 1)) +
         geom_line(color = "blue") +
@@ -216,8 +293,35 @@ server <- function(input, output){
              x = "범죄 유형",
              y = "범죄율") +
         theme(legend.position = "none")
-    })  
+    })
+    
+    # 연도별 5대 범죄 건수 테이블
+    output$crimeCountTableByYear <- renderDataTable({
+      # 선택한 연도에 해당하는 데이터 필터링
+      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      # 연도별 5대 범죄 건수 계산
+      crime_counts <- selected_year_data %>%
+        summarise(
+          murder_count = sum(살인),
+          robbery_count = sum(강도),
+          rape_count = sum(강간),
+          theft_count = sum(절도),
+          violence_count = sum(폭력)
+        )
+      # 데이터프레임으로 변환
+      crime_counts_df <- data.frame(
+        범죄유형 = c("살인", "강도", "강간", "절도", "폭력"),
+        건수 = c(
+          crime_counts$murder_count,
+          crime_counts$robbery_count,
+          crime_counts$rape_count,
+          crime_counts$theft_count,
+          crime_counts$violence_count
+        )
+      )
+      # DataTable으로 출력
+      datatable(crime_counts_df, options = list(dom = 't', pageLength = 5))
+    })
 }
-
 
 shinyApp(ui, server)
