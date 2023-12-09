@@ -17,9 +17,12 @@ library(treemapify)
 library(readr)
 library(RColorBrewer)
 
+data_path <- "C:/bdata/raw/preprocessed_data.csv"
+your_data <- read.csv(data_path)
+
 ui <- dashboardPage(
   dashboardHeader(
-    title = "여성 가구 범죄율 파악"
+    title = "1인여성가구 범죄율 파악"
     ),
   dashboardSidebar(
     sidebarMenu(
@@ -37,7 +40,6 @@ ui <- dashboardPage(
         tabName = 'home',
         fluidPage(
           titlePanel(" 서울시 1인 여성가구 범죄율 파악"),
-          
           # 내용을 표시하는 주 패널
           mainPanel(
             # 첫 번째 박스 - 프로젝트 설명
@@ -64,34 +66,157 @@ ui <- dashboardPage(
         )
       ),
      tabItem(tabName = 'female',
-             fluidPage(
-               titlePanel("Crime Analysis for Single-Person Female Households"),
-               mainPanel(
-                 plotOutput("crimePlot"),
-                 dataTableOutput("crimeTable")
-               )
+             
+     ),
+     tabItem(tabName = 'gu',
+             
+     ),
+     tabItem(
+       tabName = 'time',
+       fluidPage(
+         titlePanel("연도별"),
+         tabsetPanel(
+           type = "tabs",
+           id = "timeTabs",
+           tabPanel(
+             "1인 여성 가구수",
+             box(
+               title = "1인 여성 가구수 통계",
+               status = "info",
+               solidHeader = TRUE,
+               width = 1000,
+               selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+               plotOutput("femaleYearPlot")
              )
-     ),
-     tabItem(tabName = 'gu'
-     ),
-     tabItem(tabName = 'time'
+           ),
+           tabPanel(
+             "범죄 발생 건수",
+             box(
+               title = "범죄 건수",
+               status = "info",
+               solidHeader = TRUE,
+               width = 500,
+               selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+               plotOutput("crimeCountByYearPlot")
+             )
+           ),
+           tabPanel(
+             "범죄율",
+             box(
+               title = "연도별 5대 범죄율",
+               status = "info",
+               solidHeader = TRUE,
+               width = 500,
+               selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+               plotOutput("crimeRateByYearPlot")
+             )
+           )
+         )
+       )
      )
     )
    )
   )
 
 server <- function(input, output){
-  output$crimePlot <- renderPlot({
-    # 데이터를 기반으로 플롯을 생성하는 코드를 추가하세요 (여기서는 예시로 임의의 데이터 사용)
-    ggplot(data = data.frame(x = 2015:2022, y = c(3, 1, 4, 1, 5, 3, 2, 3)), aes(x = x, y = y )) +
+ #'time'탭--------------------------------------------
+    #1인여성가구수 그래프
+    output$femaleYearPlot <- renderPlot({
+    # 선택한 연도에 해당하는 데이터 필터링
+    selected_year_data <- subset(your_data, 연도 == input$selected_year)
+    
+    # NA 값이 있는 경우 0으로 대체
+    selected_year_data$여자[is.na(selected_year_data$여자)] <- 0
+    
+    # 막대 그래프 생성
+    ggplot(selected_year_data, aes(x = 자치구명, y = 여자, fill = 자치구명)) +
       geom_bar(stat = "identity") +
-      labs(title = "서울시 1인 여성 가구수 파악")
+      theme_minimal() +
+      labs(title = paste(input$selected_year, "년도 1인 여성 가구수"),
+           x = "자치구",
+           y = "1인 여성 가구수",
+           fill = "자치구") +
+      theme(legend.position = "none")
   })
-  
-  output$crimeTable <- renderDataTable({
-    # 데이터를 기반으로 데이터 테이블을 생성하는 코드를 추가하세요 (여기서는 예시로 임의의 데이터 사용)
-    datatable(data.frame(ID = 1:5, Value = c(3, 1, 4, 1, 5)), options = list(pageLength = 10))
-  })
+    # 연도별 범죄 건수 그래프
+    output$crimeCountByYearPlot <- renderPlot({
+      # 선택한 연도에 해당하는 데이터 필터링
+      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      
+      # 연도별 5대 범죄 건수 계산
+      crime_counts <- selected_year_data %>%
+        summarise(
+          murder_count = sum(살인),
+          robbery_count = sum(강도),
+          rape_count = sum(강간),
+          theft_count = sum(절도),
+          violence_count = sum(폭력)
+        )
+      
+      # 연도별 범죄 건수를 데이터프레임으로 변환
+      crime_counts_df <- data.frame(
+        범죄유형 = c("살인", "강도", "강간", "절도", "폭력"),
+        건수 = c(
+          crime_counts$murder_count,
+          crime_counts$robbery_count,
+          crime_counts$rape_count,
+          crime_counts$theft_count,
+          crime_counts$violence_count
+        )
+      )
+      
+      # 막대 그래프 생성
+      ggplot(crime_counts_df, aes(x = 범죄유형, y = 건수, fill = 범죄유형)) +
+        geom_bar(stat = "identity") +
+        theme_minimal() +
+        labs(title = paste(input$selected_year, "년도 5대 범죄 발생 건수"),
+             x = "범죄 유형",
+             y = "범죄 발생 건수",
+             fill = "범죄 유형") +
+        theme(legend.position = "none")
+    })
+    #범죄율 선 그래프
+    output$crimeRateByYearPlot <- renderPlot({
+      # 선택한 연도에 해당하는 데이터 필터링
+      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      # NA 값이 있는 경우 0으로 대체
+      selected_year_data$살인[is.na(selected_year_data$살인)] <- 0
+      selected_year_data$강도[is.na(selected_year_data$강도)] <- 0
+      selected_year_data$강간[is.na(selected_year_data$강간)] <- 0
+      selected_year_data$절도[is.na(selected_year_data$절도)] <- 0
+      selected_year_data$폭력[is.na(selected_year_data$폭력)] <- 0
+       # 연도별 5대 범죄율 계산
+      crime_rates <- selected_year_data %>%
+        summarise(
+          murder_rate = sum(살인) / sum(여자) * 1000,  # 살인율
+          robbery_rate = sum(강도) / sum(여자) * 1000,  # 강도율
+          rape_rate = sum(강간) / sum(여자) * 1000,  # 강간율
+          theft_rate = sum(절도) / sum(여자) * 1000,  # 절도율
+          violence_rate = sum(폭력) / sum(여자) * 1000  # 폭력율
+        )
+      
+      # 연도별 범죄율을 데이터프레임으로 변환
+      crime_rates_df <- data.frame(
+        범죄율 = c("살인율", "강도율", "강간율", "절도율", "폭력율"),
+        비율 = c(
+          crime_rates$murder_rate,
+          crime_rates$robbery_rate,
+          crime_rates$rape_rate,
+          crime_rates$theft_rate,
+          crime_rates$violence_rate
+        )
+      )
+      
+      # 선 그래프 생성
+      ggplot(crime_rates_df, aes(x = 범죄율, y = 비율, group = 1)) +
+        geom_line(color = "blue") +
+        geom_point(color = "red") +
+        theme_minimal() +
+        labs(title = paste(input$selected_year, "년도 5대 범죄율"),
+             x = "범죄 유형",
+             y = "범죄율") +
+        theme(legend.position = "none")
+    })  
 }
 
 
