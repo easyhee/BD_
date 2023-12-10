@@ -70,7 +70,10 @@ ui <- dashboardPage(
              fluidPage(
                titlePanel("서울시 1인 여성 가구 수 현황"),
                  box(
+                 title = "서울시 1인 여성 가구수 파악",
+                 solidHeader = TRUE,
                  width = 11,
+                 status = "primary",
                  plotOutput("femalePlot"),
                  dataTableOutput("femaleTable")
                  )
@@ -87,6 +90,7 @@ ui <- dashboardPage(
                    box(
                      title = "자치구별에 따른 범죄건수",
                      solidHeader = TRUE,
+                     status = "primary",
                      width = 200,
                      selectInput("select_gu","자치구를 선택해주세요", choices = unique(your_data$자치구명)),
                      plotOutput("guPlot")
@@ -97,6 +101,7 @@ ui <- dashboardPage(
                  box(
                    title = "자치구에 따른 1인 여성 가구수",
                    solidHeader = TRUE,
+                   status = "primary",
                    width = 300,
                    selectInput("selected_gu", "자치구를 선택해주세요", choices = unique(your_data$자치구명)),
                    plotOutput("gufePlot")
@@ -117,6 +122,7 @@ ui <- dashboardPage(
              box(
                title = "1인 여성 가구수 통계",
                solidHeader = TRUE,
+               status = "primary",
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("femaleYearPlot")
@@ -126,6 +132,7 @@ ui <- dashboardPage(
              "범죄 발생 건수",
              box(
                title = "범죄 건수",
+               status = "primary",
                solidHeader = TRUE,
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
@@ -136,6 +143,7 @@ ui <- dashboardPage(
              "범죄율",
              box(
                title = "연도별 5대 범죄율",
+               status = "primary",
                solidHeader = TRUE,
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
@@ -167,7 +175,7 @@ server <- function(input, output){
     your_data$여자[is.na(your_data$여자)] <- 0
     ggplot(data = your_data, aes(x = 연도, y = 여자)) +
       geom_bar(stat = "identity", fill = "pink", alpha = 1.0, width = 0.5) +
-      labs(title = "서울시 1인 여성 가구수 파악", x = "연도", y = "1인 여성 가구수", fill = "1인 여성 가구수") +
+      labs( x = "연도", y = "1인 여성 가구수", fill = "1인 여성 가구수") +
       theme_minimal() +
       theme(legend.position = "none")
   })
