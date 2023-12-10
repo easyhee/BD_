@@ -116,7 +116,6 @@ ui <- dashboardPage(
              "1인 여성 가구수",
              box(
                title = "1인 여성 가구수 통계",
-               status = "info",
                solidHeader = TRUE,
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
@@ -127,7 +126,6 @@ ui <- dashboardPage(
              "범죄 발생 건수",
              box(
                title = "범죄 건수",
-               status = "info",
                solidHeader = TRUE,
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
@@ -138,7 +136,6 @@ ui <- dashboardPage(
              "범죄율",
              box(
                title = "연도별 5대 범죄율",
-               status = "info",
                solidHeader = TRUE,
                width = 300,
                selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
@@ -147,7 +144,7 @@ ui <- dashboardPage(
            ),
            box(
              title = "Table",
-             status = "info",
+             status = "primary",
              solidHeader = TRUE,
              width = 500,
              dataTableOutput("crimeCountTableByYear")
