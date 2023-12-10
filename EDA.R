@@ -135,7 +135,7 @@ ui <- dashboardPage(
                status = "primary",
                solidHeader = TRUE,
                width = 300,
-               selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+               selectInput("selected_year2", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("crimeCountByYearPlot")
              )
            ),
@@ -146,7 +146,7 @@ ui <- dashboardPage(
                status = "primary",
                solidHeader = TRUE,
                width = 300,
-               selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+               selectInput("selected_year3", "연도를 선택해주세요", choices = unique(your_data$연도)),
                plotOutput("crimeRateByYearPlot")
              )
            ),
@@ -234,7 +234,7 @@ server <- function(input, output){
     # 연도별 범죄 건수 그래프
     output$crimeCountByYearPlot <- renderPlot({
       # 선택한 연도에 해당하는 데이터 필터링
-      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      selected_year_data <- subset(your_data, 연도 == input$selected_year2)
       # 연도별 5대 범죄 건수 계산
       crime_counts <- selected_year_data %>%
         summarise(
@@ -259,7 +259,7 @@ server <- function(input, output){
       ggplot(crime_counts_df, aes(x = 범죄유형, y = 건수, fill = 범죄유형)) +
         geom_bar(stat = "identity", width = 0.5) +
         theme_minimal() +
-        labs(title = paste(input$selected_year, "년도 5대 범죄 발생 건수"),
+        labs(title = paste(input$selected_year2, "년도 5대 범죄 발생 건수"),
              x = "범죄 유형",
              y = "범죄 발생 건수",
              fill = "범죄 유형") +
@@ -269,7 +269,7 @@ server <- function(input, output){
     #범죄율 선 그래프
     output$crimeRateByYearPlot <- renderPlot({
       # 선택한 연도에 해당하는 데이터 필터링
-      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      selected_year_data <- subset(your_data, 연도 == input$selected_year3)
       # NA 값이 있는 경우 0으로 대체
       selected_year_data$살인[is.na(selected_year_data$살인)] <- 0
       selected_year_data$강도[is.na(selected_year_data$강도)] <- 0
@@ -301,7 +301,7 @@ server <- function(input, output){
         geom_line(color = "blue") +
         geom_point(color = "red") +
         theme_minimal() +
-        labs(title = paste(input$selected_year, "년도 5대 범죄율"),
+        labs(title = paste(input$selected_year3, "년도 5대 범죄율"),
              x = "범죄 유형",
              y = "범죄율") +
         theme(legend.position = "none")
@@ -310,7 +310,7 @@ server <- function(input, output){
     # 연도별 5대 범죄 건수 테이블
     output$crimeCountTableByYear <- renderDataTable({
       # 선택한 연도에 해당하는 데이터 필터링
-      selected_year_data <- subset(your_data, 연도 == input$selected_year)
+      selected_year_data <- subset(your_data, 연도 == input$selected_year3)
       # 연도별 5대 범죄 건수 계산
       crime_counts <- selected_year_data %>%
         summarise(
