@@ -87,7 +87,7 @@ ui <- dashboardPage(
                   type = "tabs",
                   id = "guTabs",
                   tabPanel(
-                    "자치구별 범죄건수",
+                    "범죄건수",
                     box(
                       title = "자치구별에 따른 범죄건수",
                       solidHeader = TRUE,
@@ -98,7 +98,7 @@ ui <- dashboardPage(
                     )
                   ),
                   tabPanel(
-                    "자치구별 1인 여성 가구수",
+                    "1인 여성 가구수",
                     box(
                       title = "자치구에 따른 1인 여성 가구수",
                       solidHeader = TRUE,
@@ -119,7 +119,7 @@ ui <- dashboardPage(
             type = "tabs",
             id = "timeTabs",
             tabPanel(
-              "구별 범죄 발생 건수",
+              "범죄 발생 건수",
               box(
                 title = "범죄율이 높은 구를 찾아보세요",
                 solidHeader = TRUE,
@@ -145,10 +145,17 @@ ui <- dashboardPage(
                 solidHeader = TRUE,
                 width = 300,
                 plotOutput("crimetotalByYearPlot")
+              ),
+              box(
+                title = "Table",
+                status = "primary",
+                solidHeader = TRUE,
+                width = 500,
+                dataTableOutput("crimeCountTableByYear")
               )
             ),
             tabPanel(
-              "범죄율",
+              "항목별 범죄율",
               box(
                 title = "연도별 5대 범죄율",
                 status = "primary",
@@ -156,15 +163,9 @@ ui <- dashboardPage(
                 width = 300,
                 selectInput("selected_year3", "연도를 선택해주세요", choices = unique(your_data$연도)),
                 plotOutput("crimeRateByYearPlot")
-              )
+              ),
+             
             ),
-            box(
-              title = "Table",
-              status = "primary",
-              solidHeader = TRUE,
-              width = 500,
-              dataTableOutput("crimeCountTableByYear")
-            )
           )
         )
       )
@@ -197,13 +198,13 @@ server <- function(input, output){
   # 자치구별에 따른 범죄건수 그래프
   output$guPlot <- renderPlot({
     selected_gu_data <- subset(your_data, 자치구명 == input$select_gu)
-    ggplot(data = selected_gu_data, aes(x = 연도, y = 폭력, fill = 폭력)) +
+    ggplot(data = selected_gu_data, aes(x = 연도, y = 건수, fill = 건수)) +
       geom_bar(stat = "identity") +
-      geom_text(aes(label = 여자), vjust = -0.5, size = 3, color = "black") +
+      geom_text(aes(label = 건수), vjust = -0.5, size = 3, color = "black") +
       labs(title = paste(input$select_gu, "자치구의 범죄건수"),
            x = "연도",
            y = "범죄건수",
-           fill = "범죄건수") +
+           fill = "건수") +
       theme_minimal() +
       theme(legend.position = "none")
   })
@@ -285,7 +286,7 @@ server <- function(input, output){
            y = "5대범죄 발생 건수" ,
            fill = "건수") +
       theme(legend.position = "none")
-  
+    
   })
   #범죄율 선 그래프
   output$crimeRateByYearPlot <- renderPlot({
