@@ -45,6 +45,7 @@ crime_2020 <- crime_2020 %>% mutate(강도 =  as.integer(강도))
 crime_2021 <- crime_2021 %>% mutate(강도 =  as.integer(강도))
 crime_2022 <- crime_2022 %>% mutate(강도 =  as.integer(강도))
 
+
 crime_dt <- bind_rows(crime_2015,crime_2016,crime_2017,crime_2018,
                       crime_2019,crime_2020,crime_2021,crime_2022)
 
@@ -52,7 +53,8 @@ crime_dt <- crime_dt %>%
   mutate(강도 =  as.integer(강도))
 
 crime_dt <- crime_dt %>%
-  select(자치구명, 연도, 살인, 강도, 강간, 절도, 폭력) 
+  select(자치구명, 연도, 살인, 강도, 강간, 절도, 폭력, 건수) 
+View(crime_dt)
 
 final_dt <- data %>% 
   left_join(crime_dt, by = c("자치구명", "연도"))
