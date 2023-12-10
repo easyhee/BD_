@@ -276,8 +276,9 @@ server <- function(input, output){
   })
   #연도별 5대범죄 발생 건수
   output$crimetotalByYearPlot <- renderPlot({
-    ggplot(data = your_data, aes(x = 연도, y = 건수, fill = "red")) +
+    ggplot(data = your_data, aes(x = 연도, y = 건수, fill = as.factor(연도))) +
       geom_bar(stat = "identity", width = 0.5 ) +
+      scale_fill_manual(values = rainbow(n = length(unique(your_data$연도)))) +
       theme_minimal() +
       labs(title = "연도별 5대범죄 발생 건수",
            x = "연도", 
