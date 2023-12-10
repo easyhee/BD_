@@ -22,6 +22,7 @@ library(RColorBrewer)
 data_path <- "C:/bdata/raw/preprocessed_data.csv"
 your_data <- read.csv(data_path)
 
+
 ui <- dashboardPage(
   dashboardHeader(
     title = "서울시 1인여성가구 범죄율 파악",
@@ -118,9 +119,9 @@ ui <- dashboardPage(
             type = "tabs",
             id = "timeTabs",
             tabPanel(
-              "1인 여성 가구수",
+              "구별 범죄 발생 건수",
               box(
-                title = "1인 여성 가구수 통계",
+                title = "범죄율이 높은 구를 찾아보세요",
                 solidHeader = TRUE,
                 status = "primary",
                 width = 300,
@@ -129,14 +130,21 @@ ui <- dashboardPage(
               )
             ),
             tabPanel(
-              "범죄 발생 건수",
+              "유형별 범죄 발생 건수",
               box(
-                title = "범죄 건수",
+                title = "유형별 범죄 건수",
                 status = "primary",
                 solidHeader = TRUE,
                 width = 300,
                 selectInput("selected_year2", "연도를 선택해주세요", choices = unique(your_data$연도)),
                 plotOutput("crimeCountByYearPlot")
+              ),
+              box(
+                title = "연도별 5대범죄 발생수",
+                status = "primary",
+                solidHeader = TRUE,
+                width = 300,
+                plotOutput("crimetotalByYearPlot")
               )
             ),
             tabPanel(
@@ -219,17 +227,14 @@ server <- function(input, output){
     # 선택한 연도에 해당하는 데이터 필터링
     selected_year_data <- subset(your_data, 연도 == input$selected_year)
     
-    # NA 값이 있는 경우 0으로 대체
-    selected_year_data$여자[is.na(selected_year_data$여자)] <- 0
-    
     # 막대 그래프 생성
-    ggplot(selected_year_data, aes(x = 자치구명, y = 여자, fill = 자치구명)) +
+    ggplot(selected_year_data, aes(x = 자치구명, y = 건수, fill = 자치구명)) +
       geom_bar(stat = "identity") +
-      geom_text(aes(label = 여자), vjust = -0.5, size = 3, color = "black") +
+      geom_text(aes(label = 건수), vjust = -0.5, size = 3, color = "black") +
       theme_minimal() +
-      labs(title = paste(input$selected_year, "년도 1인 여성 가구수"),
+      labs(title = paste(input$selected_year, "년도 구별 5대범죄 발생 건수"),
            x = "자치구",
-           y = "1인 여성 가구수",
+           y = "건수",
            fill = "자치구") +
       theme(legend.position = "none")
   })
@@ -263,13 +268,24 @@ server <- function(input, output){
       geom_bar(stat = "identity", width = 0.5) +
       geom_text(aes(label = 건수), vjust = -0.5, size = 3, color = "black")+
       theme_minimal() +
-      labs(title = paste(input$selected_year2, "년도 5대 범죄 발생 건수"),
+      labs(title = paste(input$selected_year2, "년도 5대 범죄 유형 별 발생 건수"),
            x = "범죄 유형",
            y = "범죄 발생 건수",
            fill = "범죄 유형") +
       theme(legend.position = "none")
   })
+  #연도별 5대범죄 발생 건수
+  output$crimetotalByYearPlot <- renderPlot({
+    ggplot(data = your_data, aes(x = 연도, y = 건수, fill = "red")) +
+      geom_bar(stat = "identity", width = 0.5 ) +
+      theme_minimal() +
+      labs(title = "연도별 5대범죄 발생 건수",
+           x = "연도", 
+           y = "5대범죄 발생 건수" ,
+           fill = "건수") +
+      theme(legend.position = "none")
   
+  })
   #범죄율 선 그래프
   output$crimeRateByYearPlot <- renderPlot({
     # 선택한 연도에 해당하는 데이터 필터링
