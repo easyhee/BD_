@@ -126,6 +126,17 @@ ui <- dashboardPage(
                 status = "primary",
                 width = 300,
                 selectInput("selected_year", "연도를 선택해주세요", choices = unique(your_data$연도)),
+                plotOutput("crimeYearPlot")
+              )
+            ),
+            tabPanel(
+              "1인 여성 가구수",
+              box(
+                title = "1인 여성가구수가 높은 구를 찾아보세요",
+                solidHeader = TRUE,
+                status = "primary",
+                width = 300,
+                selectInput("selected_year0", "연도를 선택해주세요", choices = unique(your_data$연도)),
                 plotOutput("femaleYearPlot")
               )
             ),
@@ -164,7 +175,6 @@ ui <- dashboardPage(
                 selectInput("selected_year3", "연도를 선택해주세요", choices = unique(your_data$연도)),
                 plotOutput("crimeRateByYearPlot")
               ),
-             
             ),
           )
         )
@@ -223,8 +233,8 @@ server <- function(input, output){
       theme(legend.position = "none")
   })
   #'time'탭---------------------------------------------------------------------------------------------
-  #1인여성가구수 그래프
-  output$femaleYearPlot <- renderPlot({
+  #5대범죄발생건수 그래프
+  output$crimeYearPlot <- renderPlot({
     # 선택한 연도에 해당하는 데이터 필터링
     selected_year_data <- subset(your_data, 연도 == input$selected_year)
     
@@ -239,7 +249,22 @@ server <- function(input, output){
            fill = "자치구") +
       theme(legend.position = "none")
   })
-  
+  #1인여성가구수 그래프
+  output$femaleYearPlot <- renderPlot({
+    # 선택한 연도에 해당하는 데이터 필터링
+    selected_year_data <- subset(your_data, 연도 == input$selected_year0)
+    
+    # 막대 그래프 생성
+    ggplot(selected_year_data, aes(x = 자치구명, y = 여자, fill = 자치구명)) +
+      geom_bar(stat = "identity") +
+      geom_text(aes(label = 여자), vjust = -0.5, size = 3, color = "black") +
+      theme_minimal() +
+      labs(title = paste(input$selected_year, "년도 구별 1인 여성 가구수"),
+           x = "자치구",
+           y = "여자",
+           fill = "자치구") +
+      theme(legend.position = "none")
+  })
   # 연도별 범죄 건수 그래프
   output$crimeCountByYearPlot <- renderPlot({
     # 선택한 연도에 해당하는 데이터 필터링
